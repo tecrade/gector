@@ -2,6 +2,7 @@ from transformers import AutoModel, AutoTokenizer, AutoConfig, PreTrainedModel
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
+import os
 from torch.nn import CrossEntropyLoss
 from dataclasses import dataclass
 from .configuration import GECToRConfig
@@ -219,7 +220,7 @@ class GECToR(PreTrainedModel):
         pretrained_model_name_or_path: str,
         special_tokens_fix: int,  # 0 or 1
         transformer_model: str,
-        vocab_path: str,
+        vocab_path: str = None,
         p_dropout: float=0.0,
         max_length=80,
         label_smoothing=0.0,
@@ -242,7 +243,9 @@ class GECToR(PreTrainedModel):
         Returns: 
             GECToR: The instance of GECToR.
         '''
-    
+        if vocab_path is None:
+            base_dir = os.path.join(os.path.dirname(__file__), "data", "output_vocabulary")
+            vocab_path = base_dir
         label2id, d_label2id = load_vocab_from_official(vocab_path)
 
         # The order of labels is
