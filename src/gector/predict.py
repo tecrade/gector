@@ -4,6 +4,7 @@ from tqdm import tqdm
 from .modeling import GECToR
 from transformers import PreTrainedTokenizer
 from typing import List
+import json
 
 def load_verb_dict(verb_file: str):
     path_to_dict = os.path.join(verb_file)
@@ -236,3 +237,39 @@ def predict(
 
     assert('-1' not in final_edited_sents)
     return final_edited_sents, final_tags, all_tags   # NEW: return all_tags too
+
+#This is the updared version of function predict() which can return corrected sentence and errors occured with respective error_tags and error types in object format
+def predict_with_corrections(model: GECToR,
+    tokenizer: PreTrainedTokenizer,
+    srcs: List[str],
+    encode: dict,
+    decode: dict,
+    keep_confidence: float=0,
+    min_error_prob: float=0,
+    batch_size: int=128,
+    n_iteration: int=5):
+    #fetch corrected , final_tags, all_tags from predict() method.
+    corrected,final_tags,all_tags=predict(model,tokenizer,srcs,encode,decode,keep_confidence,min_error_prob,batch_size,n_iteration)
+    # Path to your JSON file
+    file_path = "gector/src/gector/data/error_library.json"
+
+    # Load it
+    with open(file_path, "r", encoding="utf-8") as f:
+       data = json.load(f)
+
+    # Now 'data' is a Python dict (or list, depending on the JSON structure)
+    results=[]
+    for sent, corr, tag_history in zip(srcs, corrected, all_tags):
+        errors=[]
+        sent_tokens_list=sent.split(' ')
+        corrected_tokens_list=corr.split(' ')
+        for idx,(sent_token,corr_token) in enumerate(zip(sent_tokens_list,corrected_tokens_list)):
+            if sent_token != corr_token:
+                for it, tags in enumerate(tag_history):
+                    if(tags[idx+1]!='$KEEP'):
+                        error_tag=tags[idx+1]
+                        error_type=data.get(error_tag,"Undefined Error")
+                        error_token={"original_token":sent_token,"corrected_token":corr_token,"error_tag":error_tag,"error_type":error_type}
+                        errors.append(error_token)
+        results.append({"original_sentence":sent,"corrected_sentence":corr,"errors":errors})
+    return results
