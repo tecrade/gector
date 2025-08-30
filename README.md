@@ -85,14 +85,14 @@ corrected ,final_tags,all_tags= predict(
     n_iteration=5,
     batch_size=2,
 )
-print("corrected":corrected)
-print("final_tags":final_tags)
+print("Corrected":corrected)
+print("Final_tags":final_tags)
 print("All_tags":all_tags)
 ```
 -Output
 ```sh
- correcetd: ['This is a correct sentence.', 'These are the wrong sentences .']
- final_tags: [['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP'], ['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP']]
+ Corrected: ['This is a correct sentence.', 'These are the wrong sentences .']
+ Final_tags: [['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP'], ['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP']]
  All_tags: [[['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP']], [['$KEEP', '$REPLACE_These', '$REPLACE_is', '$KEEP', '$KEEP', '$REPLACE_sentences'], ['$KEEP', '$KEEP', '$REPLACE_are', '$REPLACE_the', '$TRANSFORM_VERB_VBN_VB', '$APPEND_.'], ['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP'], ['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP']]]
 
 ```
