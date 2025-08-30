@@ -266,8 +266,9 @@ class GECToR(PreTrainedModel):
             is_official_model=True
         )
         model = GECToR(config=config)
-        
-        official_state_dict = torch.load(pretrained_model_name_or_path)
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        official_state_dict = torch.load(pretrained_model_name_or_path,map_location=device)
         # Resolve the official parameter names.
         new_state_dict = dict()
         for k, v in official_state_dict.items():
