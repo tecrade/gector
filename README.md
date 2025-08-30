@@ -24,6 +24,9 @@ This is one of the implementation of the following [paper](https://aclanthology.
     - Without AllenNLP
     - Trained checkpoints can be downloaded from Hub
     - Distributed training
+    - Dedicated methods to fetch grammar error corrections applied to a given input text
+    - dedicated error_library to map model reponse error tags to error types (like 'error_tag': '$TRANSFORM_VERB_VBN_VB' --> 'error_type': 'Verb Form / Tense error')
+    - All dependencies are internally handelled  by just pip installing this repo
     - 😔 Does not support probabilistic ensemble
 - [cofe-ai/fast-gector](https://github.com/cofe-ai/fast-gector)
     - Use Accelerate for distributed training
