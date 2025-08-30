@@ -34,11 +34,7 @@ This is one of the implementation of the following [paper](https://aclanthology.
 # Installing
 Confirmed that it works on python3.11.0.
 ```sh
-pip install git+https://github.com/gotutiyan/gector
-# Donwload the verb dictionary in advance
-mkdir data
-cd data
-wget https://github.com/grammarly/gector/raw/master/data/verb-form-vocab.txt
+pip install git+https://github.com/tecrade/gector
 ```
 
 ### License
@@ -50,7 +46,13 @@ wget https://github.com/grammarly/gector/raw/master/data/verb-form-vocab.txt
 - This implementation supports both our models and the official models.
 - I will published pre-trained weights on Hugging Face Hub. Please refer to [Performances obtained](https://github.com/gotutiyan/gector#performances_obtained).
 - Note that this implementation does not support probabilistic ensembling. See [Ensemble](https://github.com/gotutiyan/gector#ensemble).
- 
+- for CLI usage you need to explicitly download the 'data' folder from officical repo [grammarly/gector](https://github.com/grammarly/gector)
+  ```sh
+  mkdir data
+  cd data
+  wget wget https://github.com/grammarly/gector/raw/master/data/verb-form-vocab.txt
+  ```
+- for API you can ignore the downloading process of 'data' folder from official repo [grammarly/gector](https://github.com/grammarly/gector) , since it is internally bundled with pip install
 
 ### For our models
 
@@ -70,12 +72,12 @@ from gector import GECToR, predict, load_verb_dict
 model_id = 'gotutiyan/gector-roberta-base-5k'
 model = GECToR.from_pretrained(model_id)
 tokenizer = AutoTokenizer.from_pretrained(model_id)
-encode, decode = load_verb_dict('data/verb-form-vocab.txt')
+encode, decode = load_verb_dict()
 srcs = [
     'This is a correct sentence.',
     'This are a wrong sentences'
 ]
-corrected = predict(
+corrected ,final_tags,all_tags= predict(
     model, tokenizer, srcs,
     encode, decode,
     keep_confidence=0.0,
@@ -83,9 +85,17 @@ corrected = predict(
     n_iteration=5,
     batch_size=2,
 )
-print(corrected)
+print("corrected":corrected)
+print("final_tags":final_tags)
+print("All_tags":all_tags)
 ```
+-Output
+```sh
+ correcetd: ['This is a correct sentence.', 'These are the wrong sentences .']
+ final_tags: [['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP'], ['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP']]
+ All_tags: [[['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP']], [['$KEEP', '$REPLACE_These', '$REPLACE_is', '$KEEP', '$KEEP', '$REPLACE_sentences'], ['$KEEP', '$KEEP', '$REPLACE_are', '$REPLACE_the', '$TRANSFORM_VERB_VBN_VB', '$APPEND_.'], ['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP'], ['$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP', '$KEEP']]]
 
+```
 ### For official models
 
 #### CLI
@@ -155,19 +165,42 @@ python predict.py \
 #### API
 
 - Use `GECToR.from_official_pretrained()` instead of `GECToR.from_pretrained()`.
+- Here is the demo for official model 'bert_0_gectorv2.th'. You can simply follow this steps for other models too.
+- In this demo we use our custom method called `predict_with_corrections()` which is the modified veersion of normal `predict()`. You can use any of these methods according to desired output.
+  
+```sh
+wget https://grammarly-nlp-data-public.s3.amazonaws.com/gector/bert_0_gectorv2.th
+```
 
 ```py
 from transformers import AutoTokenizer
-from gector import GECToR, predict, load_verb_dict
+from gector import GECToR, predict, load_verb_dict, predict_with_corrections
+
 model = GECToR.from_official_pretrained(
-    'bert_0_gectorv2.th',
+    '/content/bert_0_gectorv2.th',
     special_tokens_fix=0,
     transformer_model='bert-base-cased',
-    vocab_path='data/output_vocabulary',
     max_length=80
 )
 tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
-encode, decode = load_verb_dict('data/verb-form-vocab.txt')
+encode, decode = load_verb_dict()
+srcs = [
+    'This is a correct sentence.',
+    'This are a wronged sentenfves'
+]
+corrected = predict_with_corrections(
+    model, tokenizer, srcs,
+    encode, decode,
+    keep_confidence=0.0,
+    min_error_prob=0.0,
+    n_iteration=5,
+    batch_size=2,
+)
+print(corrected)
+```
+- Output
+```sh
+[{'original_sentence': 'This is a correct sentence.', 'corrected_sentence': 'This is a correct sentence.', 'errors': []}, {'original_sentence': 'This are a wronged sentenfves', 'corrected_sentence': 'These are the wrong sentences .', 'errors': [{'original_token': 'This', 'corrected_token': 'These', 'error_tag': '$REPLACE_These', 'error_type': 'Word Choice / Replacement error'}, {'original_token': 'a', 'corrected_token': 'the', 'error_tag': '$REPLACE_the', 'error_type': 'Word Choice / Replacement error'}, {'original_token': 'wronged', 'corrected_token': 'wrong', 'error_tag': '$TRANSFORM_VERB_VBN_VB', 'error_type': 'Verb Form / Tense error'}, {'original_token': 'sentenfves', 'corrected_token': 'sentences', 'error_tag': '$REPLACE_sentences', 'error_type': 'Word Choice / Replacement error'}, {'original_token': 'sentenfves', 'corrected_token': 'sentences', 'error_tag': '$APPEND_.', 'error_type': 'Missing Word'}]}]
 ```
 
 # Performances obtained
