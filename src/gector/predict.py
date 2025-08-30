@@ -182,13 +182,16 @@ def predict(
     min_error_prob: float=0,
     batch_size: int=128,
     n_iteration: int=5
-) -> List[str]:
+):
     srcs = [['$START'] + src.split(' ') for src in srcs]
     final_edited_sents = ['-1'] * len(srcs)
+    final_tags = [[] for _ in srcs]   # <--- store last tags
+    all_tags = [[] for _ in srcs]     # NEW: store history of tags per sentence
+
     to_be_processed = srcs
     original_sent_idx = list(range(0, len(srcs)))
+
     for itr in range(n_iteration):
-        print(f'Iteratoin {itr}. the number of to_be_processed: {len(to_be_processed)}')
         pred_labels, no_corrections = _predict(
             model,
             tokenizer,
@@ -200,16 +203,22 @@ def predict(
         current_srcs = []
         current_pred_labels = []
         current_orig_idx = []
+
         for i, yes in enumerate(no_corrections):
-            if yes: # there's no corrections?
-                final_edited_sents[original_sent_idx[i]] = ' '.join(to_be_processed[i]).replace('$START ', '')
+            sent_idx = original_sent_idx[i]
+            all_tags[sent_idx].append(pred_labels[i])   # NEW: keep tags for this iteration
+
+            if yes:
+                final_edited_sents[sent_idx] = ' '.join(to_be_processed[i]).replace('$START ', '')
+                final_tags[sent_idx] = pred_labels[i]  # <--- save last tags
             else:
                 current_srcs.append(to_be_processed[i])
                 current_pred_labels.append(pred_labels[i])
-                current_orig_idx.append(original_sent_idx[i])
+                current_orig_idx.append(sent_idx)
+
         if current_srcs == []:
-            # Correcting for all sentences is completed.
             break
+
         edited_srcs = edit_src_by_tags(
             current_srcs,
             current_pred_labels,
@@ -218,7 +227,12 @@ def predict(
         )
         to_be_processed = edited_srcs
         original_sent_idx = current_orig_idx
+
     for i in range(len(to_be_processed)):
-        final_edited_sents[original_sent_idx[i]] = ' '.join(to_be_processed[i]).replace('$START ', '')
+        sent_idx = original_sent_idx[i]
+        final_edited_sents[sent_idx] = ' '.join(to_be_processed[i]).replace('$START ', '')
+        final_tags[sent_idx] = pred_labels[i]  # <--- save last tags
+        all_tags[sent_idx].append(pred_labels[i])   # NEW: also save final iteration tags
+
     assert('-1' not in final_edited_sents)
-    return final_edited_sents
+    return final_edited_sents, final_tags, all_tags   # NEW: return all_tags too
