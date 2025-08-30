@@ -5,7 +5,6 @@ description = "Unofficial PyTorch implementation of 'GECToR -- Grammatical Error
 readme = "README.md"
 authors = [
     { name = "gotuiyan"}
-    { name = "tecrade"}
 ]
 requires-python = ">=3.11.0"
 dependencies = [
