@@ -6,8 +6,14 @@ from transformers import PreTrainedTokenizer
 from typing import List
 import json
 
-def load_verb_dict(verb_file: str):
+def load_verb_dict(verb_file: str = None):
     path_to_dict = os.path.join(verb_file)
+    if verb_file is not None and os.path.exists(verb_file):
+        path_to_dict = verb_file
+    else:
+        # Use data folder bundled with the package
+        base_dir = os.path.join(os.path.dirname(__file__), "data")
+        path_to_dict = os.path.join(base_dir, "verb-form-vocab.txt")
     encode, decode = {}, {}
     with open(path_to_dict, encoding="utf-8") as f:
         for line in f:
@@ -251,7 +257,7 @@ def predict_with_corrections(model: GECToR,
     #fetch corrected , final_tags, all_tags from predict() method.
     corrected,final_tags,all_tags=predict(model,tokenizer,srcs,encode,decode,keep_confidence,min_error_prob,batch_size,n_iteration)
     # Path to your JSON file
-    file_path = "gector/src/gector/data/error_library.json"
+    file_path = "gector/data/error_library.json"
 
     # Load it
     with open(file_path, "r", encoding="utf-8") as f:
